@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Plus, Edit, Trash2, Save, X, Upload, Eye, EyeOff } from 'lucide-react';
+import { useData } from '../contexts/DataContext';
 
 interface Event {
   id: number;
@@ -12,6 +13,7 @@ interface Event {
   coffeeStop: string;
   description: string;
   image: string;
+  runnerCount: number;
 }
 
 interface Article {
@@ -53,161 +55,31 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState<'events' | 'articles' | 'crew' | 'gallery'>('events');
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Sample data - in a real app, this would come from a database
-  const [events, setEvents] = useState<Event[]>([
-    {
-      id: 1,
-      title: 'Herastrau Park Morning Run',
-      date: '2024-12-15',
-      time: '09:00',
-      location: 'Herastrau Park',
-      distance: '5K - 8K',
-      difficulty: 'All Levels',
-      coffeeStop: 'Origo Coffee Shop',
-      description: 'Beautiful lakeside run through Bucharest\'s largest park',
-      image: 'https://images.pexels.com/photos/2526878/pexels-photo-2526878.jpeg?auto=compress&cs=tinysrgb&w=800'
-    },
-    {
-      id: 2,
-      title: 'Old Town Historic Circuit',
-      date: '2024-12-22',
-      time: '09:00',
-      location: 'Old Town Circuit',
-      distance: '4K - 6K',
-      difficulty: 'Beginner Friendly',
-      coffeeStop: 'Cafea Specialty',
-      description: 'Historic route through cobblestone streets and landmarks',
-      image: 'https://images.pexels.com/photos/1556691/pexels-photo-1556691.jpeg?auto=compress&cs=tinysrgb&w=800'
-    },
-    {
-      id: 3,
-      title: 'New Year Preparation Run',
-      date: '2024-12-29',
-      time: '09:00',
-      location: 'Cismigiu Gardens',
-      distance: '3K - 7K',
-      difficulty: 'All Levels',
-      coffeeStop: 'The Ark Coffee',
-      description: 'New Year preparation run in the heart of the city',
-      image: 'https://images.pexels.com/photos/2402846/pexels-photo-2402846.jpeg?auto=compress&cs=tinysrgb&w=800'
-    }
-  ]);
-
-  const [articles, setArticles] = useState<Article[]>([
-    {
-      id: 1,
-      title: 'The Perfect Pre-Run Breakfast',
-      titleRo: 'Micul dejun perfect înainte de alergare',
-      excerpt: 'Discover what to eat before your morning run to maximize performance and avoid digestive issues.',
-      excerptRo: 'Descoperă ce să mănânci înainte de alergarea de dimineață pentru a maximiza performanța și a evita problemele digestive.',
-      author: 'Maria Popescu',
-      date: '2024-12-10',
-      image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400',
-      category: 'Nutrition',
-      categoryRo: 'Nutriție'
-    },
-    {
-      id: 2,
-      title: 'Running in Winter: Essential Tips',
-      titleRo: 'Alergarea iarna: Sfaturi esențiale',
-      excerpt: 'Stay motivated and safe during cold weather runs with our comprehensive winter running guide.',
-      excerptRo: 'Rămâi motivat și în siguranță în timpul alergărilor pe vreme rece cu ghidul nostru complet pentru alergarea de iarnă.',
-      author: 'Alexandru Ionescu',
-      date: '2024-12-08',
-      image: 'https://images.pexels.com/photos/2402846/pexels-photo-2402846.jpeg?auto=compress&cs=tinysrgb&w=400',
-      category: 'Training',
-      categoryRo: 'Antrenament'
-    },
-    {
-      id: 3,
-      title: 'Best Coffee Spots After Your Run',
-      titleRo: 'Cele mai bune cafenele după alergare',
-      excerpt: 'Our curated list of the best coffee shops in Bucharest perfect for post-run recovery.',
-      excerptRo: 'Lista noastră selectată cu cele mai bune cafenele din București perfecte pentru recuperarea după alergare.',
-      author: 'Ioana Marinescu',
-      date: '2024-12-05',
-      image: 'https://images.pexels.com/photos/1571939/pexels-photo-1571939.jpeg?auto=compress&cs=tinysrgb&w=400',
-      category: 'Coffee',
-      categoryRo: 'Cafea'
-    }
-  ]);
-
-  const [photos, setPhotos] = useState<Photo[]>([
-    {
-      id: 1,
-      url: 'https://images.pexels.com/photos/2526878/pexels-photo-2526878.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Sunday morning run through Herastrau Park'
-    },
-    {
-      id: 2,
-      url: 'https://images.pexels.com/photos/1571939/pexels-photo-1571939.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Post-run coffee celebration'
-    },
-    {
-      id: 3,
-      url: 'https://images.pexels.com/photos/1671327/pexels-photo-1671327.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Our amazing running community'
-    },
-    {
-      id: 4,
-      url: 'https://images.pexels.com/photos/1556691/pexels-photo-1556691.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Exploring Old Town Bucharest'
-    },
-    {
-      id: 5,
-      url: 'https://images.pexels.com/photos/2402846/pexels-photo-2402846.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Coffee time after a great run'
-    },
-    {
-      id: 6,
-      url: 'https://images.pexels.com/photos/1571940/pexels-photo-1571940.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Team spirit and friendship'
-    }
-  ]);
-
-  const [crewMembers, setCrewMembers] = useState<CrewMember[]>([
-    {
-      id: 1,
-      name: 'Alexandra',
-      role: 'Founder',
-      roleRo: 'Fondator',
-      description: 'The visionary behind Run To Sip, passionate about building community through running.',
-      descriptionRo: 'Vizionara din spatele Run To Sip, pasionată de construirea comunității prin alergare.',
-      image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400',
-      instagram: '@alexandra_runtosip'
-    },
-    {
-      id: 2,
-      name: 'Nemir',
-      role: 'Co-Founder',
-      roleRo: 'Co-Fondator',
-      description: 'Bringing energy and enthusiasm to every run, ensuring everyone feels welcome.',
-      descriptionRo: 'Aducând energie și entuziasm la fiecare alergare, asigurându-se că toată lumea se simte binevenită.',
-      image: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=400',
-      instagram: '@nemir_runs'
-    },
-    {
-      id: 3,
-      name: 'Tudor',
-      role: 'Photographer',
-      roleRo: 'Fotograf',
-      description: 'Capturing the beautiful moments and memories from our running adventures.',
-      descriptionRo: 'Surprinzând momentele frumoase și amintirile din aventurile noastre de alergare.',
-      image: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=400',
-      instagram: '@tudor_photos'
-    },
-    {
-      id: 4,
-      name: 'Ionut',
-      role: 'Pacer',
-      roleRo: 'Pacer',
-      description: 'Keeping the group together and ensuring everyone maintains their perfect pace.',
-      descriptionRo: 'Menținând grupul unit și asigurându-se că toată lumea își păstrează ritmul perfect.',
-      image: 'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=400',
-      instagram: '@ionut_pacer'
-    }
-  ]);
+  // Use shared data context
+  const {
+    events,
+    articles,
+    photos,
+    crewMembers,
+    loading: dataLoading,
+    error: dataError,
+    addEvent,
+    updateEvent,
+    deleteEvent,
+    addArticle,
+    updateArticle,
+    deleteArticle,
+    addPhoto,
+    updatePhoto,
+    deletePhoto,
+    addCrewMember,
+    updateCrewMember,
+    deleteCrewMember,
+    uploadImage
+  } = useData();
 
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
@@ -222,80 +94,135 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
     }
   };
 
-  const handleSaveEvent = (event: Event) => {
-    if (event.id === 0) {
-      const newEvent = { ...event, id: Date.now() };
-      setEvents([...events, newEvent]);
-    } else {
-      setEvents(events.map(e => e.id === event.id ? event : e));
+  const handleSaveEvent = async (event: Event) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      if (event.id === 0) {
+        await addEvent(event);
+      } else {
+        await updateEvent(event);
+      }
+      setEditingEvent(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save event');
+      console.error('Error saving event:', err);
+    } finally {
+      setIsLoading(false);
     }
-    setEditingEvent(null);
-    // Trigger a re-render of the main site
-    window.dispatchEvent(new CustomEvent('adminUpdate'));
   };
 
-  const handleDeleteEvent = (id: number) => {
+  const handleDeleteEvent = async (id: number) => {
     if (confirm('Are you sure you want to delete this event?')) {
-      setEvents(events.filter(e => e.id !== id));
-      window.dispatchEvent(new CustomEvent('adminUpdate'));
+      try {
+        setIsLoading(true);
+        setError(null);
+        await deleteEvent(id);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete event');
+        console.error('Error deleting event:', err);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handleSaveArticle = (article: Article) => {
-    if (article.id === 0) {
-      const newArticle = { ...article, id: Date.now() };
-      setArticles([...articles, newArticle]);
-    } else {
-      setArticles(articles.map(a => a.id === article.id ? article : a));
+  const handleSaveArticle = async (article: Article) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      if (article.id === 0) {
+        await addArticle(article);
+      } else {
+        await updateArticle(article);
+      }
+      setEditingArticle(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save article');
+      console.error('Error saving article:', err);
+    } finally {
+      setIsLoading(false);
     }
-    setEditingArticle(null);
-    window.dispatchEvent(new CustomEvent('adminUpdate'));
   };
 
-  const handleDeleteArticle = (id: number) => {
+  const handleDeleteArticle = async (id: number) => {
     if (confirm('Are you sure you want to delete this article?')) {
-      setArticles(articles.filter(a => a.id !== id));
-      window.dispatchEvent(new CustomEvent('adminUpdate'));
+      try {
+        setIsLoading(true);
+        setError(null);
+        await deleteArticle(id);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete article');
+        console.error('Error deleting article:', err);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handleSaveCrewMember = (crewMember: CrewMember) => {
-    let updatedCrewMembers;
-    if (crewMember.id === 0) {
-      const newCrewMember = { ...crewMember, id: Date.now() };
-      updatedCrewMembers = [...crewMembers, newCrewMember];
-      setCrewMembers(updatedCrewMembers);
-    } else {
-      updatedCrewMembers = crewMembers.map(c => c.id === crewMember.id ? crewMember : c);
-      setCrewMembers(updatedCrewMembers);
+  const handleSaveCrewMember = async (crewMember: CrewMember) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      if (crewMember.id === 0) {
+        await addCrewMember(crewMember);
+      } else {
+        await updateCrewMember(crewMember);
+      }
+      setEditingCrewMember(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save crew member');
+      console.error('Error saving crew member:', err);
+    } finally {
+      setIsLoading(false);
     }
-    setEditingCrewMember(null);
-    window.dispatchEvent(new CustomEvent('adminUpdate', { detail: { crewMembers: updatedCrewMembers } }));
   };
 
-  const handleDeleteCrewMember = (id: number) => {
+  const handleDeleteCrewMember = async (id: number) => {
     if (confirm('Are you sure you want to delete this crew member?')) {
-      const updatedCrewMembers = crewMembers.filter(c => c.id !== id);
-      setCrewMembers(updatedCrewMembers);
-      window.dispatchEvent(new CustomEvent('adminUpdate', { detail: { crewMembers: updatedCrewMembers } }));
+      try {
+        setIsLoading(true);
+        setError(null);
+        await deleteCrewMember(id);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete crew member');
+        console.error('Error deleting crew member:', err);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handleSavePhoto = (photo: Photo) => {
-    if (photo.id === 0) {
-      const newPhoto = { ...photo, id: Date.now() };
-      setPhotos([...photos, newPhoto]);
-    } else {
-      setPhotos(photos.map(p => p.id === photo.id ? photo : p));
+  const handleSavePhoto = async (photo: Photo) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      if (photo.id === 0) {
+        await addPhoto(photo);
+      } else {
+        await updatePhoto(photo);
+      }
+      setEditingPhoto(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save photo');
+      console.error('Error saving photo:', err);
+    } finally {
+      setIsLoading(false);
     }
-    setEditingPhoto(null);
-    window.dispatchEvent(new CustomEvent('adminUpdate'));
   };
 
-  const handleDeletePhoto = (id: number) => {
+  const handleDeletePhoto = async (id: number) => {
     if (confirm('Are you sure you want to delete this photo?')) {
-      setPhotos(photos.filter(p => p.id !== id));
-      window.dispatchEvent(new CustomEvent('adminUpdate'));
+      try {
+        setIsLoading(true);
+        setError(null);
+        await deletePhoto(id);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete photo');
+        console.error('Error deleting photo:', err);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -372,6 +299,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
               setEditingEvent={setEditingEvent}
               onSave={handleSaveEvent}
               onDelete={handleDeleteEvent}
+              uploadImage={uploadImage}
+              isLoading={isLoading}
+              error={error}
             />
           )}
           {activeTab === 'articles' && (
@@ -381,6 +311,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
               setEditingArticle={setEditingArticle}
               onSave={handleSaveArticle}
               onDelete={handleDeleteArticle}
+              uploadImage={uploadImage}
+              isLoading={isLoading}
+              error={error}
             />
           )}
           {activeTab === 'crew' && (
@@ -390,6 +323,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
               setEditingCrewMember={setEditingCrewMember}
               onSave={handleSaveCrewMember}
               onDelete={handleDeleteCrewMember}
+              uploadImage={uploadImage}
+              isLoading={isLoading}
+              error={error}
             />
           )}
           {activeTab === 'gallery' && (
@@ -399,6 +335,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
               setEditingPhoto={setEditingPhoto}
               onSave={handleSavePhoto}
               onDelete={handleDeletePhoto}
+              uploadImage={uploadImage}
+              isLoading={isLoading}
+              error={error}
             />
           )}
         </div>
@@ -408,33 +347,34 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose }) => {
 };
 
 // File Upload Hook
-const useFileUpload = () => {
+const useFileUpload = (uploadImage: (file: File, type?: 'event' | 'article' | 'crew' | 'gallery') => Promise<string>) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadFile = (callback: (url: string) => void) => {
+  const uploadFile = (callback: (url: string) => void, type: 'event' | 'article' | 'crew' | 'gallery' = 'gallery') => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, callback: (url: string) => void) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, callback: (url: string) => void, type: 'event' | 'article' | 'crew' | 'gallery' = 'gallery') => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        callback(result);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const resizedUrl = await uploadImage(file, type);
+        callback(resizedUrl);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        alert('Error uploading image. Please try again.');
+      }
     }
   };
 
-  const FileInput = ({ onFileSelect }: { onFileSelect: (url: string) => void }) => (
+  const FileInput = ({ onFileSelect, type }: { onFileSelect: (url: string) => void, type: 'event' | 'article' | 'crew' | 'gallery' }) => (
     <input
       ref={fileInputRef}
       type="file"
       accept="image/*"
-      onChange={(e) => handleFileChange(e, onFileSelect)}
+      onChange={(e) => handleFileChange(e, onFileSelect, type)}
       className="hidden"
     />
   );
@@ -443,7 +383,7 @@ const useFileUpload = () => {
 };
 
 // Events Tab Component
-const EventsTab = ({ events, editingEvent, setEditingEvent, onSave, onDelete }: any) => {
+const EventsTab = ({ events, editingEvent, setEditingEvent, onSave, onDelete, uploadImage, isLoading, error }: any) => {
   const [formData, setFormData] = useState<Event>({
     id: 0,
     title: '',
@@ -454,10 +394,11 @@ const EventsTab = ({ events, editingEvent, setEditingEvent, onSave, onDelete }: 
     difficulty: '',
     coffeeStop: '',
     description: '',
-    image: ''
+    image: '',
+    runnerCount: 0
   });
 
-  const { uploadFile, FileInput } = useFileUpload();
+  const { uploadFile, FileInput } = useFileUpload(uploadImage);
 
   React.useEffect(() => {
     if (editingEvent) {
@@ -478,7 +419,8 @@ const EventsTab = ({ events, editingEvent, setEditingEvent, onSave, onDelete }: 
       difficulty: '',
       coffeeStop: '',
       description: '',
-      image: ''
+      image: '',
+      runnerCount: 0
     });
   };
 
@@ -487,7 +429,7 @@ const EventsTab = ({ events, editingEvent, setEditingEvent, onSave, onDelete }: 
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold">Manage Events ({events.length} total)</h3>
         <button
-          onClick={() => setEditingEvent({ id: 0, title: '', date: '', time: '', location: '', distance: '', difficulty: '', coffeeStop: '', description: '', image: '' })}
+          onClick={() => setEditingEvent({ id: 0, title: '', date: '', time: '', location: '', distance: '', difficulty: '', coffeeStop: '', description: '', image: '', runnerCount: 0 })}
           className="bg-primary text-black px-4 py-2 rounded-lg font-semibold hover:bg-yellow-300 transition-colors duration-200 flex items-center space-x-2"
         >
           <Plus className="h-4 w-4" />
@@ -544,6 +486,14 @@ const EventsTab = ({ events, editingEvent, setEditingEvent, onSave, onDelete }: 
               className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />
+            <input
+              type="number"
+              placeholder="Runner Count"
+              value={formData.runnerCount}
+              onChange={(e) => setFormData({ ...formData, runnerCount: parseInt(e.target.value, 10) || 0 })}
+              className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              required
+            />
           </div>
           <input
             type="text"
@@ -567,7 +517,7 @@ const EventsTab = ({ events, editingEvent, setEditingEvent, onSave, onDelete }: 
             <div className="flex items-center space-x-4">
               <button
                 type="button"
-                onClick={() => uploadFile((url) => setFormData({ ...formData, image: url }))}
+                onClick={() => uploadFile((url) => setFormData({ ...formData, image: url }), 'event')}
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center space-x-2"
               >
                 <Upload className="h-4 w-4" />
@@ -577,7 +527,7 @@ const EventsTab = ({ events, editingEvent, setEditingEvent, onSave, onDelete }: 
                 <img src={formData.image} alt="Preview" className="h-16 w-16 object-cover rounded-lg" />
               )}
             </div>
-            <FileInput onFileSelect={(url) => setFormData({ ...formData, image: url })} />
+            <FileInput onFileSelect={(url) => setFormData({ ...formData, image: url })} type="event" />
           </div>
 
           <div className="flex space-x-4">
@@ -611,6 +561,7 @@ const EventsTab = ({ events, editingEvent, setEditingEvent, onSave, onDelete }: 
                 <h4 className="font-semibold text-gray-900">{event.title}</h4>
                 <p className="text-gray-600">{event.date} at {event.time} - {event.location}</p>
                 <p className="text-sm text-gray-500">{event.distance} • {event.difficulty}</p>
+                <p className="text-sm text-blue-600 font-medium">👥 {event.runnerCount} runners joined</p>
               </div>
             </div>
             <div className="flex space-x-2">
@@ -635,7 +586,7 @@ const EventsTab = ({ events, editingEvent, setEditingEvent, onSave, onDelete }: 
 };
 
 // Articles Tab Component
-const ArticlesTab = ({ articles, editingArticle, setEditingArticle, onSave, onDelete }: any) => {
+const ArticlesTab = ({ articles, editingArticle, setEditingArticle, onSave, onDelete, uploadImage, isLoading, error }: any) => {
   const [formData, setFormData] = useState<Article>({
     id: 0,
     title: '',
@@ -649,7 +600,7 @@ const ArticlesTab = ({ articles, editingArticle, setEditingArticle, onSave, onDe
     categoryRo: ''
   });
 
-  const { uploadFile, FileInput } = useFileUpload();
+  const { uploadFile, FileInput } = useFileUpload(uploadImage);
 
   React.useEffect(() => {
     if (editingArticle) {
@@ -759,7 +710,7 @@ const ArticlesTab = ({ articles, editingArticle, setEditingArticle, onSave, onDe
             <div className="flex items-center space-x-4">
               <button
                 type="button"
-                onClick={() => uploadFile((url) => setFormData({ ...formData, image: url }))}
+                onClick={() => uploadFile((url) => setFormData({ ...formData, image: url }), 'article')}
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center space-x-2"
               >
                 <Upload className="h-4 w-4" />
@@ -769,7 +720,7 @@ const ArticlesTab = ({ articles, editingArticle, setEditingArticle, onSave, onDe
                 <img src={formData.image} alt="Preview" className="h-16 w-16 object-cover rounded-lg" />
               )}
             </div>
-            <FileInput onFileSelect={(url) => setFormData({ ...formData, image: url })} />
+            <FileInput onFileSelect={(url) => setFormData({ ...formData, image: url })} type="article" />
           </div>
 
           <div className="flex space-x-4">
@@ -827,7 +778,7 @@ const ArticlesTab = ({ articles, editingArticle, setEditingArticle, onSave, onDe
 };
 
 // Crew Tab Component
-const CrewTab = ({ crewMembers, editingCrewMember, setEditingCrewMember, onSave, onDelete }: any) => {
+const CrewTab = ({ crewMembers, editingCrewMember, setEditingCrewMember, onSave, onDelete, uploadImage, isLoading, error }: any) => {
   const [formData, setFormData] = useState<CrewMember>({
     id: 0,
     name: '',
@@ -840,7 +791,7 @@ const CrewTab = ({ crewMembers, editingCrewMember, setEditingCrewMember, onSave,
     email: ''
   });
 
-  const { uploadFile, FileInput } = useFileUpload();
+  const { uploadFile, FileInput } = useFileUpload(uploadImage);
 
   React.useEffect(() => {
     if (editingCrewMember) {
@@ -940,7 +891,7 @@ const CrewTab = ({ crewMembers, editingCrewMember, setEditingCrewMember, onSave,
             <div className="flex items-center space-x-4">
               <button
                 type="button"
-                onClick={() => uploadFile((url) => setFormData({ ...formData, image: url }))}
+                onClick={() => uploadFile((url) => setFormData({ ...formData, image: url }), 'crew')}
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center space-x-2"
               >
                 <Upload className="h-4 w-4" />
@@ -950,7 +901,7 @@ const CrewTab = ({ crewMembers, editingCrewMember, setEditingCrewMember, onSave,
                 <img src={formData.image} alt="Preview" className="h-16 w-16 object-cover rounded-lg" />
               )}
             </div>
-            <FileInput onFileSelect={(url) => setFormData({ ...formData, image: url })} />
+            <FileInput onFileSelect={(url) => setFormData({ ...formData, image: url })} type="crew" />
           </div>
 
           <div className="flex space-x-4">
@@ -1008,14 +959,14 @@ const CrewTab = ({ crewMembers, editingCrewMember, setEditingCrewMember, onSave,
 };
 
 // Gallery Tab Component
-const GalleryTab = ({ photos, editingPhoto, setEditingPhoto, onSave, onDelete }: any) => {
+const GalleryTab = ({ photos, editingPhoto, setEditingPhoto, onSave, onDelete, uploadImage, isLoading, error }: any) => {
   const [formData, setFormData] = useState<Photo>({
     id: 0,
     url: '',
     caption: ''
   });
 
-  const { uploadFile, FileInput } = useFileUpload();
+  const { uploadFile, FileInput } = useFileUpload(uploadImage);
 
   React.useEffect(() => {
     if (editingPhoto) {
@@ -1054,7 +1005,7 @@ const GalleryTab = ({ photos, editingPhoto, setEditingPhoto, onSave, onDelete }:
             <div className="flex items-center space-x-4">
               <button
                 type="button"
-                onClick={() => uploadFile((url) => setFormData({ ...formData, url }))}
+                onClick={() => uploadFile((url) => setFormData({ ...formData, url }), 'gallery')}
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center space-x-2"
               >
                 <Upload className="h-4 w-4" />
@@ -1064,7 +1015,7 @@ const GalleryTab = ({ photos, editingPhoto, setEditingPhoto, onSave, onDelete }:
                 <img src={formData.url} alt="Preview" className="h-16 w-16 object-cover rounded-lg" />
               )}
             </div>
-            <FileInput onFileSelect={(url) => setFormData({ ...formData, url })} />
+            <FileInput onFileSelect={(url) => setFormData({ ...formData, url })} type="gallery" />
           </div>
 
           <input

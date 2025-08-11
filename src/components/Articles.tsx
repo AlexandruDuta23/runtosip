@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Calendar, User, ArrowRight, X } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useData } from '../contexts/DataContext';
 
 // Define the Article type
 interface Article {
@@ -18,61 +19,11 @@ interface Article {
 }
 
 const Articles = () => {
-  const { t, language, toggleLanguage } = useLanguage();
-
-  const [articles, setArticles] = useState<Article[]>([
-    {
-      id: 1,
-      title: 'The Perfect Pre-Run Breakfast',
-      titleRo: 'Micul dejun perfect înainte de alergare',
-      excerpt: 'Discover what to eat before your morning run to maximize performance and avoid digestive issues.',
-      excerptRo: 'Descoperă ce să mănânci înainte de alergarea de dimineață pentru a maximiza performanța și a evita problemele digestive.',
-      author: 'Maria Popescu',
-      date: '2024-12-10',
-      image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400',
-      category: 'Nutrition',
-      categoryRo: 'Nutriție',
-      url: ''
-    },
-    {
-      id: 2,
-      title: 'Running in Winter: Essential Tips',
-      titleRo: 'Alergarea iarna: Sfaturi esențiale',
-      excerpt: 'Stay motivated and safe during cold weather runs with our comprehensive winter running guide.',
-      excerptRo: 'Rămâi motivat și în siguranță în timpul alergărilor pe vreme rece cu ghidul nostru complet pentru alergarea de iarnă.',
-      author: 'Alexandru Ionescu',
-      date: '2024-12-08',
-      image: 'https://images.pexels.com/photos/2402846/pexels-photo-2402846.jpeg?auto=compress&cs=tinysrgb&w=400',
-      category: 'Training',
-      categoryRo: 'Antrenament',
-      url: ''
-    },
-    {
-      id: 3,
-      title: 'Best Coffee Spots After Your Run',
-      titleRo: 'Cele mai bune cafenele după alergare',
-      excerpt: 'Our curated list of the best coffee shops in Bucharest perfect for post-run recovery.',
-      excerptRo: 'Lista noastră selectată cu cele mai bune cafenele din București perfecte pentru recuperarea după alergare.',
-      author: 'Ioana Marinescu',
-      date: '2024-12-05',
-      image: 'https://images.pexels.com/photos/1571939/pexels-photo-1571939.jpeg?auto=compress&cs=tinysrgb&w=400',
-      category: 'Coffee',
-      categoryRo: 'Cafea',
-      url: ''
-    }
-  ]);
+  const { t, language } = useLanguage();
+  const { articles } = useData();
 
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [modalLang, setModalLang] = useState(language);
-
-  // Listen for admin updates
-  useEffect(() => {
-    const handleAdminUpdate = () => {
-      window.location.reload();
-    };
-    window.addEventListener('adminUpdate', handleAdminUpdate);
-    return () => window.removeEventListener('adminUpdate', handleAdminUpdate);
-  }, []);
 
   const openModal = (article: Article) => {
     setSelectedArticle(article);

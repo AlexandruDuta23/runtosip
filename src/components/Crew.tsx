@@ -1,6 +1,7 @@
 import React from 'react';
 import { Instagram, Mail, Camera, Users } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useData } from '../contexts/DataContext';
 
 interface CrewMember {
   id: number;
@@ -14,8 +15,9 @@ interface CrewMember {
   email?: string;
 }
 
-const Crew = ({ crewMembers }: { crewMembers: CrewMember[] }) => {
+const Crew = () => {
   const { t, language } = useLanguage();
+  const { crewMembers } = useData();
 
   return (
     <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-50">

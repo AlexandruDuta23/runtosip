@@ -54,28 +54,16 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            {["about", "schedule", "articles", "events", "contact"].map((item) => (
-              item === "events" ? (
-                <Link
-                  key={item}
-                  to="/events"
-                  className={`font-medium transition-colors duration-200 hover:text-primary ${
-                    isScrolled || location.pathname !== '/' ? 'text-gray-700' : 'text-white'
-                  }`}
-                >
-                  Events
-                </Link>
-              ) : (
-                <button
-                  key={item}
-                  onClick={() => scrollToSection(item)}
-                  className={`font-medium transition-colors duration-200 hover:text-primary ${
-                    isScrolled || location.pathname !== '/' ? 'text-gray-700' : 'text-white'
-                  }`}
-                >
-                  {t(item)}
-                </button>
-              )
+            {["about", "schedule", "articles", "contact"].map((item) => (
+              <button
+                key={item}
+                onClick={() => scrollToSection(item)}
+                className={`font-medium transition-colors duration-200 hover:text-primary ${
+                  isScrolled || location.pathname !== '/' ? 'text-gray-700' : 'text-white'
+                }`}
+              >
+                {t(item)}
+              </button>
             ))}
             <Link
               to="/crew"
@@ -84,6 +72,14 @@ const Header = () => {
               } ${location.pathname === '/crew' ? 'text-primary' : ''}`}
             >
               {t('crew')}
+            </Link>
+            <Link
+              to="/gallery"
+              className={`font-medium transition-colors duration-200 hover:text-primary ${
+                isScrolled || location.pathname !== '/' ? 'text-gray-700' : 'text-white'
+              } ${location.pathname === '/gallery' ? 'text-primary' : ''}`}
+            >
+              Gallery
             </Link>
             <LanguageToggle />
           </nav>
@@ -105,25 +101,14 @@ const Header = () => {
       {isMenuOpen && (
         <div className="md:hidden bg-white shadow-lg">
           <div className="px-2 pt-2 pb-3 space-y-1">
-            {["about", "schedule", "articles", "events", "contact"].map((item) => (
-              item === "events" ? (
-                <Link
-                  key={item}
-                  to="/events"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="block px-3 py-2 text-gray-700 font-medium hover:text-primary transition-colors duration-200"
-                >
-                  Events
-                </Link>
-              ) : (
-                <button
-                  key={item}
-                  onClick={() => scrollToSection(item)}
-                  className="block px-3 py-2 text-gray-700 font-medium hover:text-primary transition-colors duration-200"
-                >
-                  {t(item)}
-                </button>
-              )
+            {["about", "schedule", "articles", "contact"].map((item) => (
+              <button
+                key={item}
+                onClick={() => scrollToSection(item)}
+                className="block px-3 py-2 text-gray-700 font-medium hover:text-primary transition-colors duration-200"
+              >
+                {t(item)}
+              </button>
             ))}
             <Link
               to="/crew"
@@ -131,6 +116,13 @@ const Header = () => {
               className="block px-3 py-2 text-gray-700 font-medium hover:text-primary transition-colors duration-200"
             >
               {t('crew')}
+            </Link>
+            <Link
+              to="/gallery"
+              onClick={() => setIsMenuOpen(false)}
+              className="block px-3 py-2 text-gray-700 font-medium hover:text-primary transition-colors duration-200"
+            >
+              Gallery
             </Link>
           </div>
         </div>

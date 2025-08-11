@@ -39,7 +39,7 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-6">{t('quickLinks')}</h3>
             <ul className="space-y-3">
-              {['about', 'schedule', 'articles', 'events'].map((link) => (
+              {['about', 'schedule', 'articles'].map((link) => (
                 <li key={link}>
                   <button
                     onClick={() => {
@@ -60,6 +60,14 @@ const Footer = () => {
                   className="text-gray-300 hover:text-primary transition-colors duration-200"
                 >
                   {t('crew')}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/gallery"
+                  className="text-gray-300 hover:text-primary transition-colors duration-200"
+                >
+                  Gallery
                 </Link>
               </li>
             </ul>

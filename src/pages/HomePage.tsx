@@ -5,7 +5,7 @@ import About from '../components/About';
 import Schedule from '../components/Schedule';
 import WhatsAppJoin from '../components/WhatsAppJoin';
 import Articles from '../components/Articles';
-import Gallery from '../components/Gallery';
+import { Gallery } from '../components/Gallery';
 import Footer from '../components/Footer';
 
 const HomePage = () => {

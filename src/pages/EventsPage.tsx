@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
-import Gallery from '../components/Gallery';
+import EventGrid from '../components/EventGrid';
 import Footer from '../components/Footer';
 import AdminPanel from '../components/AdminPanel';
 
@@ -14,7 +14,7 @@ const EventsPage = () => {
     <>
       <Header />
       <div className="pt-20"> {/* Add padding to account for fixed header */}
-        <Gallery />
+        <EventGrid />
       </div>
       <Footer />
       {/* Optionally render AdminPanel here if needed */}
