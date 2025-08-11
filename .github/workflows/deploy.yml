@@ -25,17 +25,11 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ secrets.ARTIFACT_HOST }} >> ~/.ssh/known_hosts
-          ls -la ~/.ssh/
-          ssh-add -l
 
       - name: build
         run: |
           npm run build
 
-      - name: Test SSH connection
-        run: |
-          ssh -o StrictHostKeyChecking=no -o Verbose=true ${{ secrets.ARTIFACT_USERNAME }}@${{ secrets.ARTIFACT_HOST }} "echo 'SSH connection successful'"
-
       - name: Deploy to server or Storage Box
         run: |
-          rsync -azP -e "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ./dist ${{ secrets.ARTIFACT_USERNAME }}@${{ secrets.ARTIFACT_HOST }}:~/deployment/dist/
+          rsync -azP -e "ssh -i $HOME/.ssh/id_ed25519 -p 23" ./dist ${{ secrets.ARTIFACT_USERNAME }}@${{ secrets.ARTIFACT_HOST }}:~/deployment/dist/
