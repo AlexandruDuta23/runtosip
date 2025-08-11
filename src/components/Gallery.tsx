@@ -1,42 +1,37 @@
 import React from 'react';
-import { Heart, MessageCircle } from 'lucide-react';
+import { Heart, MessageCircle, Camera } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { useData } from '../contexts/DataContext';
 
 export const Gallery = () => {
-  const { t } = useLanguage();
-  const { photos } = useData();
+  const { t, language } = useLanguage();
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {photos.map((photo) => (
-          <div
-            key={photo.id}
-            className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
-          >
-            <img
-              src={photo.url}
-              alt={photo.caption}
-              className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="absolute bottom-4 left-4 right-4">
-                <p className="text-white font-medium line-clamp-2">{photo.caption}</p>
-                <div className="flex items-center space-x-4 mt-2">
-                  <div className="flex items-center space-x-1 text-white">
-                    <Heart className="h-4 w-4" />
-                    <span className="text-sm">42</span>
-                  </div>
-                  <div className="flex items-center space-x-1 text-white">
-                    <MessageCircle className="h-4 w-4" />
-                    <span className="text-sm">8</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+      {/* Placeholder message since photos are no longer available */}
+      <div className="text-center py-16">
+        <div className="bg-white rounded-3xl shadow-lg p-12 max-w-2xl mx-auto">
+          <div className="text-6xl mb-6">📸</div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">
+            {language === 'en' ? 'Gallery Section Coming Soon!' : 'Secțiunea Galerie în Curând!'}
+          </h3>
+          <p className="text-gray-600 mb-6">
+            {language === 'en' 
+              ? 'Our amazing running photos and memories will be featured here soon. Stay tuned for updates!' 
+              : 'Fotografiile minunate de alergare și amintirile vor fi prezenți aici în curând. Rămâneți conectați pentru actualizări!'
+            }
+          </p>
+          <div className="flex justify-center space-x-4">
+            <a
+              href="https://www.instagram.com/runtosip/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-primary text-black px-6 py-3 rounded-full font-semibold hover:bg-yellow-300 transition-colors duration-300 flex items-center space-x-2"
+            >
+              <Camera className="h-5 w-5" />
+              <span>{language === 'en' ? 'View Photos' : 'Vezi Fotografii'}</span>
+            </a>
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );
