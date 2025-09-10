@@ -1,9 +1,22 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Calendar, User, ArrowRight, X, BookOpen } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const Articles = () => {
   const { t, language } = useLanguage();
+  const [items, setItems] = useState<Array<{ id: number; name: string; url: string; image: string }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/articles');
+        if (res.ok) setItems(await res.json());
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   return (
     <section id="articles" className="py-20 bg-gradient-to-br from-gray-50 to-yellow-50">
@@ -17,32 +30,25 @@ const Articles = () => {
           </p>
         </div>
 
-        {/* Placeholder message since articles are no longer available */}
-        <div className="text-center py-16">
-          <div className="bg-white rounded-3xl shadow-lg p-12 max-w-2xl mx-auto">
-            <div className="text-6xl mb-6">📝</div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              {language === 'en' ? 'Articles Section Coming Soon!' : 'Secțiunea Articole în Curând!'}
-            </h3>
-            <p className="text-gray-600 mb-6">
-              {language === 'en' 
-                ? 'Our latest articles and running tips will be featured here soon. Stay tuned for updates!' 
-                : 'Cele mai recente articole și sfaturi de alergare vor fi prezenți aici în curând. Rămâneți conectați pentru actualizări!'
-              }
-            </p>
-            <div className="flex justify-center space-x-4">
-              <a
-                href="https://www.instagram.com/runtosip/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-primary text-black px-6 py-3 rounded-full font-semibold hover:bg-yellow-300 transition-colors duration-300 flex items-center space-x-2"
-              >
-                <BookOpen className="h-5 w-5" />
-                <span>{language === 'en' ? 'Follow Us' : 'Urmăriți-ne'}</span>
+        {loading ? (
+          <div className="text-center py-16 text-gray-500">Loading articles...</div>
+        ) : items.length === 0 ? (
+          <div className="text-center py-16 text-gray-600">No articles yet.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {items.map(a => (
+              <a key={a.id} href={a.url} target="_blank" rel="noreferrer" className="bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-xl transition">
+                <div className="h-44 bg-gray-100">
+                  <img src={a.image} alt={a.name} className="w-full h-full object-cover" />
+                </div>
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{a.name}</h3>
+                  <p className="text-sm text-blue-600 underline truncate">{a.url}</p>
+                </div>
               </a>
-            </div>
+            ))}
           </div>
-        </div>
+        )}
       </div>
     </section>
   );

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 // Define interfaces for our data types
 interface Event {
@@ -19,6 +20,16 @@ interface DataContextType {
   events: Event[];
   loading: boolean;
   error: string | null;
+  page?: number;
+  pageSize?: number;
+  total?: number;
+  totalPages?: number;
+  setPagination: (p: { page: number; pageSize: number }) => void;
+  refresh: () => Promise<void>;
+  createEvent: (payload: Omit<Event, 'id' | 'runnerCount'>) => Promise<number>;
+  updateEvent: (id: number, updates: Partial<Omit<Event, 'id'>>) => Promise<void>;
+  deleteEvent: (id: number) => Promise<void>;
+  uploadEventImage: (id: number, file: File) => Promise<void>;
   joinEvent: (eventId: number) => Promise<{ success: boolean; message: string }>;
 }
 
@@ -40,71 +51,87 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [total, setTotal] = useState<number | undefined>(undefined);
+  const [totalPages, setTotalPages] = useState<number | undefined>(undefined);
+  const { authHeader } = useAuth();
 
-  // Static events data
-  const staticEvents: Event[] = [
-    {
-      id: 1,
-      title: "Herastrau Park Morning Run",
-      date: "2024-12-15",
-      time: "09:00",
-      location: "Herastrau Park",
-      distance: "5K - 8K",
-      difficulty: "All Levels",
-      coffeeStop: "Origo Coffee Shop",
-      description: "Beautiful lakeside run through Bucharest's largest park",
-      image: "https://images.pexels.com/photos/2526878/pexels-photo-2526878.jpeg?auto=compress&cs=tinysrgb&w=800",
-      runnerCount: 15
-    },
-    {
-      id: 2,
-      title: "Cismigiu Gardens Evening Run",
-      date: "2024-12-20",
-      time: "18:30",
-      location: "Cismigiu Gardens",
-      distance: "3K - 5K",
-      difficulty: "Beginner Friendly",
-      coffeeStop: "Café Central",
-      description: "Relaxing evening run in the heart of Bucharest",
-      image: "https://images.pexels.com/photos/2526878/pexels-photo-2526878.jpeg?auto=compress&cs=tinysrgb&w=800",
-      runnerCount: 8
-    },
-    {
-      id: 3,
-      title: "Carol Park Trail Run",
-      date: "2024-12-25",
-      time: "10:00",
-      location: "Carol Park",
-      distance: "8K - 12K",
-      difficulty: "Intermediate",
-      coffeeStop: "Starbucks",
-      description: "Challenging trail run with beautiful city views",
-      image: "https://images.pexels.com/photos/2526878/pexels-photo-2526878.jpeg?auto=compress&cs=tinysrgb&w=800",
-      runnerCount: 12
+  const refresh = async () => {
+    try {
+      setLoading(true);
+      const url = `/api/events?page=${page}&pageSize=${pageSize}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to fetch events');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setEvents(data);
+        setTotal(undefined);
+        setTotalPages(undefined);
+      } else {
+        setEvents(data.items || []);
+        setTotal(data.total);
+        setTotalPages(data.totalPages);
+      }
+      setError(null);
+    } catch (e: any) {
+      setError(e?.message || 'Unknown error');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setEvents(staticEvents);
-      setLoading(false);
-    }, 500);
+    refresh();
+  }, [page, pageSize]);
 
-    return () => clearTimeout(timer);
-  }, []);
+  const setPagination = (p: { page: number; pageSize: number }) => {
+    setPage(p.page);
+    setPageSize(p.pageSize);
+  };
+
+  const createEvent = async (payload: Omit<Event, 'id' | 'runnerCount'>) => {
+    const res = await fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error('Failed to create event');
+    const data = await res.json();
+    await refresh();
+    return data.id as number;
+  };
+
+  const updateEvent = async (id: number, updates: Partial<Omit<Event, 'id'>>) => {
+    const res = await fetch(`/api/events/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) throw new Error('Failed to update event');
+    await refresh();
+  };
+
+  const deleteEvent = async (id: number) => {
+    const res = await fetch(`/api/events/${id}`, { method: 'DELETE', headers: { ...authHeader() } });
+    if (!res.ok && res.status !== 204) throw new Error('Failed to delete event');
+    await refresh();
+  };
+
+  const uploadEventImage = async (id: number, file: File) => {
+    const form = new FormData();
+    form.append('image', file);
+    const res = await fetch(`/api/events/${id}/image`, { method: 'POST', headers: { ...authHeader() }, body: form });
+    if (!res.ok) throw new Error('Failed to upload image');
+    await refresh();
+  };
 
   const joinEvent = async (eventId: number): Promise<{ success: boolean; message: string }> => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setEvents(prev => prev.map(event => 
-        event.id === eventId 
-          ? { ...event, runnerCount: event.runnerCount + 1 }
-          : event
-      ));
-      
+      const res = await fetch(`/api/events/${eventId}/join`, { method: 'POST' });
+      if (!res.ok) throw new Error('Failed to join event');
+      const data = await res.json();
+      setEvents(prev => prev.map(event => event.id === eventId ? { ...event, runnerCount: data.runnerCount } : event));
       return { success: true, message: 'Successfully joined the event!' };
     } catch (err) {
       return { success: false, message: 'Failed to join event' };
@@ -115,7 +142,17 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     events,
     loading,
     error,
-    joinEvent
+    page,
+    pageSize,
+    total,
+    totalPages,
+    setPagination,
+    refresh,
+    createEvent,
+    updateEvent,
+    deleteEvent,
+    uploadEventImage,
+    joinEvent,
   };
 
   return (
@@ -123,4 +160,4 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       {children}
     </DataContext.Provider>
   );
-}; 
+};

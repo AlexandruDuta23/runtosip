@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, Mail, MapPin, Clock } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import AdminPanel from './AdminPanel';
 
 const Footer = () => {
   const { t } = useLanguage();
@@ -136,26 +135,13 @@ const Footer = () => {
         </div>
         
         {/* Admin Access */}
-        <AdminAccess />
+        <div className="mt-8 pt-4 border-t border-gray-800 text-center">
+          <Link to="/admin" className="text-gray-600 hover:text-gray-400 text-xs transition-colors duration-200">
+            Admin
+          </Link>
+        </div>
       </div>
     </footer>
-  );
-};
-
-// Admin Access Component
-const AdminAccess = () => {
-  const [isVisible, setIsVisible] = useState(false);
-  
-  return (
-    <div className="mt-8 pt-4 border-t border-gray-800">
-      <button
-        onClick={() => setIsVisible(true)}
-        className="text-gray-600 hover:text-gray-400 text-xs transition-colors duration-200"
-      >
-        Admin
-      </button>
-      {isVisible && <AdminPanel onClose={() => setIsVisible(false)} />}
-    </div>
   );
 };
 
