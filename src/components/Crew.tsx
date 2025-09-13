@@ -1,9 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Instagram, Mail, Camera, Users } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const Crew = () => {
   const { t, language } = useLanguage();
+
+  const [members, setMembers] = useState<Array<{ id: number; firstName: string; lastName: string; age: number | null; profession: string; description: string; image: string }>>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/crew');
+        if (res.ok) setMembers(await res.json());
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   return (
     <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -22,32 +36,26 @@ const Crew = () => {
           </p>
         </div>
 
-        {/* Placeholder message since crew members are no longer available */}
-        <div className="text-center py-16">
-          <div className="bg-white rounded-3xl shadow-lg p-12 max-w-2xl mx-auto">
-            <div className="text-6xl mb-6">👥</div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              {language === 'en' ? 'Crew Section Coming Soon!' : 'Secțiunea Echipă în Curând!'}
-            </h3>
-            <p className="text-gray-600 mb-6">
-              {language === 'en' 
-                ? 'Our amazing crew members will be featured here soon. Stay tuned for updates!' 
-                : 'Membrii minunați ai echipei noastre vor fi prezenți aici în curând. Rămâneți conectați pentru actualizări!'
-              }
-            </p>
-            <div className="flex justify-center space-x-4">
-              <a
-                href="https://www.instagram.com/runtosip/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-primary text-black px-6 py-3 rounded-full font-semibold hover:bg-yellow-300 transition-colors duration-300 flex items-center space-x-2"
-              >
-                <Instagram className="h-5 w-5" />
-                <span>Instagram</span>
-              </a>
-            </div>
+        {loading ? (
+          <div className="text-center py-16 text-gray-500">Loading crew...</div>
+        ) : members.length === 0 ? (
+          <div className="text-center py-16 text-gray-600">No crew members yet.</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {members.map(m => (
+              <div key={m.id} className="bg-white rounded-3xl shadow-lg overflow-hidden">
+                <div className="h-56 bg-gray-100">
+                  <img src={m.image} alt={`${m.firstName} ${m.lastName}`} className="w-full h-full object-cover" />
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-gray-900">{m.firstName} {m.lastName}</h3>
+                  <p className="text-sm text-gray-500 mb-2">{m.profession}{m.age ? ` • ${m.age}` : ''}</p>
+                  <p className="text-gray-700 text-sm">{m.description}</p>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+        )}
 
         <div className="mt-16 bg-gradient-to-r from-primary to-secondary rounded-3xl p-8 md:p-12 text-center text-black">
           <h3 className="text-3xl font-bold mb-4">{t('joinOurTeam')}</h3>
