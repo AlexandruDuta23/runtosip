@@ -51,6 +51,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, variant = 'modal' }) =
     image: '/uploads/placeholder.jpg',
   }), []);
   const [creatingEvent, setCreatingEvent] = useState(emptyEvent);
+  const [creatingEventFile, setCreatingEventFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingEvent, setEditingEvent] = useState(emptyEvent);
   const [createErrors, setCreateErrors] = useState<string[]>([]);
@@ -471,10 +472,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, variant = 'modal' }) =
                 {/* Image upload small */}
                 <label className="px-2 py-1 border rounded w-fit text-sm flex items-center gap-2 cursor-pointer">
                   <ImageIcon className="h-4 w-4" /> {eventImageSelected ? 'Image selected' : 'Upload image'}
-                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (!f) return;
-                    (document as any).lastUploadFile = f;
+                    setCreatingEventFile(f);
                     setEventImageSelected(true);
                   }} />
                 </label>
@@ -491,9 +492,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, variant = 'modal' }) =
                   setCreateErrors(errs);
                   if (errs.length === 0) {
                     const newId = await createEvent(creatingEvent as any);
-                    if ((document as any).lastUploadFile) {
-                      await uploadEventImage(newId, (document as any).lastUploadFile);
-                      (document as any).lastUploadFile = undefined;
+                    if (creatingEventFile) {
+                      try {
+                        await uploadEventImage(newId, creatingEventFile);
+                      } catch (err) {
+                        showToast('error', 'Image upload failed');
+                      }
+                      setCreatingEventFile(null);
                     }
                     await refresh();
                     setCreatingEvent(emptyEvent);
@@ -594,6 +599,7 @@ const CrewAdminSection: React.FC<{ showToast: (t: 'success' | 'error', m: string
   const [error, setError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ firstName: '', lastName: '', age: '', profession: '', description: '' });
+  const [lastCrewUpload, setLastCrewUpload] = useState<File | null>(null);
   const [editId, setEditId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ firstName: '', lastName: '', age: '', profession: '', description: '' });
   const [crewImageSelected, setCrewImageSelected] = useState(false);
@@ -624,6 +630,8 @@ const CrewAdminSection: React.FC<{ showToast: (t: 'success' | 'error', m: string
     };
     const res = await fetch('/api/crew', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeader() }, body: JSON.stringify(body) });
     if (!res.ok) throw new Error('Create failed');
+    const data = await res.json();
+    return data.id as number;
   };
 
   const updateMember = async (id: number) => {
@@ -714,22 +722,21 @@ const CrewAdminSection: React.FC<{ showToast: (t: 'success' | 'error', m: string
               <textarea className="md:col-span-2 border rounded px-3 py-2" placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
               <label className="border rounded px-3 py-2 flex items-center gap-2 cursor-pointer">
                 <ImageIcon className="h-4 w-4" /> {crewImageSelected ? 'Image selected' : 'Upload image'}
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { (document as any).lastCrewUpload = f; setCrewImageSelected(true); } }} />
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setLastCrewUpload(f); setCrewImageSelected(true); } }} />
               </label>
             </div>
             <div className="mt-4 flex justify-end gap-2">
               <button className="px-4 py-2 border rounded" onClick={() => setCreateOpen(false)}>Cancel</button>
               <button className="bg-primary text-black px-4 py-2 rounded font-semibold" onClick={async () => {
                 try {
-                  await createMember();
-                  await load();
-                  const created = members.find(m => m.firstName === form.firstName && m.lastName === form.lastName && m.profession === form.profession);
-                  const f = (document as any).lastCrewUpload as File | undefined;
-                  if (created && f) {
-                    const fd = new FormData(); fd.append('image', f);
-                    const r = await fetch(`/api/crew/${created.id}/image`, { method: 'POST', headers: { ...authHeader() }, body: fd });
+                  const createdId = await createMember();
+                  if (lastCrewUpload) {
+                    const fd = new FormData(); fd.append('image', lastCrewUpload);
+                    const r = await fetch(`/api/crew/${createdId}/image`, { method: 'POST', headers: { ...authHeader() }, body: fd });
                     if (!r.ok) throw new Error();
-                    (document as any).lastCrewUpload = undefined;
+                    setLastCrewUpload(null);
+                    await load();
+                  } else {
                     await load();
                   }
                   setForm({ firstName: '', lastName: '', age: '', profession: '', description: '' });
