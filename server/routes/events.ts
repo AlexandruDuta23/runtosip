@@ -6,6 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import type { Request } from 'express';
 import { requireAdmin } from '../middleware/requireAdmin';
+import sharp from 'sharp';
 
 export const eventsRouter = Router();
 
@@ -185,15 +186,41 @@ eventsRouter.post('/:id/join', async (req, res) => {
 
 // Protected: Upload or change event image
 eventsRouter.post('/:id/image', requireAdmin, uploadImageMw, async (req: Request, res) => {
-  const uploaded = (req as any).file as any;
+  const uploaded = (req as any).file;
   if (!uploaded) return res.status(400).json({ message: 'No file uploaded' });
-  const publicPath = `/uploads/${uploaded.filename}`;
-  const result = await query<{ id: number; image: string }>(
-    `UPDATE events SET image = $1 WHERE id = $2 RETURNING id, image`,
-    [publicPath, req.params.id]
-  );
-  if (result.rows.length === 0) return res.status(404).json({ message: 'Not found' });
-  res.json(result.rows[0]);
+
+  const inputPath = uploaded.path; // full path from multer
+  const ext = path.extname(uploaded.filename);
+  const outputFilename = `processed-${uploaded.filename}`;
+  const outputPath = path.join(uploadsDir, outputFilename);
+
+  try {
+    // Example: center crop + resize to 800x800
+    await sharp(inputPath)
+      .rotate() // fix orientation based on EXIF
+      .resize({
+        width: 800,
+        height: 800,
+        fit: sharp.fit.cover, // center crop if needed
+        position: sharp.strategy.attention, // focus on subject if possible
+      })
+      .jpeg({ quality: 85 }) // adjust quality if JPEG
+      .toFile(outputPath);
+
+    // Delete the original file
+    await fs.promises.unlink(inputPath);
+
+    const publicPath = `/uploads/${outputFilename}`;
+    const result = await query<{ id: number; image: string }>(
+      `UPDATE events SET image = $1 WHERE id = $2 RETURNING id, image`,
+      [publicPath, req.params.id]
+    );
+
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Not found' });
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Image processing failed' });
+  }
 });
-
-

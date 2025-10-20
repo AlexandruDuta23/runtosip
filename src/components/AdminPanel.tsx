@@ -538,10 +538,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, variant = 'modal' }) =
               </select>
               <label className="border rounded px-3 py-2 flex items-center gap-2 cursor-pointer">
                 <ImageIcon className="h-4 w-4" /> {eventImageSelected ? 'Image selected' : 'Upload image'}
-                <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (!f) return;
-                  (document as any).lastUploadFile = f;
+                  // store the selected file in React state (avoid globals)
+                  setCreatingEventFile(f);
                   setEventImageSelected(true);
                 }} />
               </label>
@@ -555,26 +556,35 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onClose, variant = 'modal' }) =
             )}
             <div className="mt-4 flex justify-end gap-2">
               <button className="px-4 py-2 border rounded" onClick={() => setIsCreateOpen(false)}>Cancel</button>
-              <button className="bg-primary text-black px-4 py-2 rounded font-semibold" onClick={async () => {
-                const errs = validateEventData(creatingEvent);
-                setCreateErrors(errs);
-                if (errs.length === 0) {
-                  // Create event first
-                  await createEvent(creatingEvent as any);
-                  await refresh();
-                  // Find the newly created event (assume last page or fetch first page to find by title/time)
-                  const created = events.find(e => e.title === creatingEvent.title && e.time === creatingEvent.time && e.date === creatingEvent.date);
-                  if (created && (document as any).lastUploadFile) {
-                    await uploadEventImage(created.id, (document as any).lastUploadFile);
-                    (document as any).lastUploadFile = undefined;
-                    await refresh();
+                <button className="bg-primary text-black px-4 py-2 rounded font-semibold" onClick={async () => {
+                  const errs = validateEventData(creatingEvent);
+                  setCreateErrors(errs);
+                  if (errs.length === 0) {
+                    try {
+                      // create event and get its id from the server
+                      const newId = await createEvent(creatingEvent as any);
+
+                      // if a file was selected, upload it using the returned id
+                      if (creatingEventFile) {
+                        try {
+                          await uploadEventImage(newId, creatingEventFile);
+                        } catch (err) {
+                          showToast('error', 'Image upload failed');
+                        }
+                        setCreatingEventFile(null);
+                      }
+
+                      // refresh list and reset UI
+                      await refresh();
+                      setCreatingEvent(emptyEvent);
+                      setEventImageSelected(false);
+                      setIsCreateOpen(false);
+                      showToast('success', 'Event created successfully');
+                    } catch (err) {
+                      showToast('error', 'Create failed');
+                    }
                   }
-                  setCreatingEvent(emptyEvent);
-                  setEventImageSelected(false);
-                  setIsCreateOpen(false);
-                  showToast('success', 'Event created successfully');
-                }
-              }}>Create Event</button>
+                }}>Create Event</button>
             </div>
           </div>
         </div>
