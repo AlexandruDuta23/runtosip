@@ -1,10 +1,13 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 
-dotenv.config();
-const databaseUrl = process.env.DATABASE_URL || `postgresql://${encodeURIComponent(process.env.PGUSER || 'postgres')}:${encodeURIComponent(process.env.PGPASSWORD || '')}@${process.env.PGHOST || 'localhost'}:${process.env.PGPORT || '5432'}/${process.env.PGDATABASE || 'postgres'}`;
+dotenv.config({ override: false });
+const databaseUrl =
+  process.env.DATABASE_URL ||
+  `postgresql://${encodeURIComponent(process.env.PGUSER || 'postgres')}:${encodeURIComponent(process.env.PGPASSWORD || '')}@${process.env.PGHOST || 'db'}:${process.env.PGPORT || '5432'}/${process.env.PGDATABASE || 'postgres'}`;
 
-if (process.env.DEBUG_DB === '1') {
+
+  if (process.env.DEBUG_DB === '1') {
   try {
     const u = new URL(databaseUrl);
     const user = decodeURIComponent(u.username || '');
