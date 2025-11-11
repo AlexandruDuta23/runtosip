@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageToggle from './LanguageToggle';
@@ -18,10 +18,14 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const navigate = useNavigate();
+
   const scrollToSection = (sectionId: string) => {
-    // If we're not on the home page, navigate to home first
+    // If we're not on the home page, navigate there first using client-side routing
     if (location.pathname !== '/') {
-      window.location.href = `/#${sectionId}`;
+      // pass the desired section in navigation state; HomePage will handle scrolling after mount
+      navigate('/', { state: { scrollTo: sectionId } });
+      setIsMenuOpen(false);
     } else {
       const element = document.getElementById(sectionId);
       if (element) {

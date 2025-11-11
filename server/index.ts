@@ -8,8 +8,11 @@ import { authRouter } from './routes/auth';
 import { adminsRouter } from './routes/admins';
 import { crewRouter } from './routes/crew';
 import { articlesRouter } from './routes/articles';
+import { pool } from './db';
 
-dotenv.config();
+
+
+dotenv.config({ override: false });
 
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 5174;
@@ -29,9 +32,16 @@ app.use('/api/articles', articlesRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/admins', adminsRouter);
 
-app.listen(port, () => {
-  // eslint-disable-next-line no-console
-  console.log(`API listening on http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`API listening on http://0.0.0.0:${port}`);
 });
 
 
+(async () => {
+  try {
+    const res = await pool.query('SELECT NOW()');
+    console.log(`[DB] Connected successfully at ${res.rows[0].now}`);
+  } catch (err) {
+    console.error('[DB] Connection failed:', err);
+  }
+})();

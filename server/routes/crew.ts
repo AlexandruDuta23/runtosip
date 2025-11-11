@@ -6,7 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import type { Request } from 'express';
 import { requireAdmin } from '../middleware/requireAdmin';
-
+import sharp from 'sharp';
 export const crewRouter = Router();
 
 // Ensure uploads directory exists
@@ -122,15 +122,40 @@ crewRouter.delete('/:id', requireAdmin, async (req, res) => {
 });
 
 crewRouter.post('/:id/image', requireAdmin, uploadImageMw, async (req: Request, res) => {
-  const uploaded = (req as any).file as any;
+  const uploaded = (req as any).file;
   if (!uploaded) return res.status(400).json({ message: 'No file uploaded' });
-  const publicPath = `/uploads/${uploaded.filename}`;
-  const result = await query<{ id: number; image: string }>(
-    `UPDATE crew_members SET image = $1 WHERE id = $2 RETURNING id, image`,
-    [publicPath, req.params.id]
-  );
-  if (result.rows.length === 0) return res.status(404).json({ message: 'Not found' });
-  res.json(result.rows[0]);
+
+  const inputPath = uploaded.path;
+  const outputFilename = `processed-${uploaded.filename}`;
+  const outputPath = path.join(uploadsDir, outputFilename);
+
+  try {
+    await sharp(inputPath)
+      .rotate() // fix EXIF orientation
+      .resize({
+        width: 800,
+        height: 800,
+        fit: sharp.fit.cover, // crop centrally
+        position: sharp.strategy.attention,
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: 85 })
+      .toFile(outputPath);
+
+    await fs.promises.unlink(inputPath);
+
+    const publicPath = `/uploads/${outputFilename}`;
+    const result = await query<{ id: number; image: string }>(
+      `UPDATE crew_members SET image = $1 WHERE id = $2 RETURNING id, image`,
+      [publicPath, req.params.id]
+    );
+
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Image processing failed:', err);
+    res.status(500).json({ message: 'Image processing failed' });
+  }
 });
 
 
