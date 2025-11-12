@@ -23,11 +23,7 @@ async function migrate() {
 }
 
 migrate()
-  .then(() => process.exit(0))
-  .catch((err) => {
-    // eslint-disable-next-line no-console
-    console.error('Migration 003 failed:', err);
-    process.exit(1);
-  });
+  .then(() => console.log("Migration complete"))
+  .catch(err => console.error("Migration failed", err));
 
 

@@ -1,28 +1,53 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:16
+  db:
+    image: postgres:15
+    container_name: runtosip-db
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  app:
-    build: .
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: runtosip-server
     ports:
-      - "4173:4173"
+      - "5174:5174"
     environment:
-      - PGUSER=user
-      - PGPASSWORD=password
-      - PGPORT=5432
-      - PGDATABASE=db
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: admin
+      PGDATABASE: postgres
+      PORT: 5174
     depends_on:
-      - postgres
+      db:
+        condition: service_healthy
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: runtosip-client
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://server:5174
+    depends_on:
+      - server
+    command: ["npm", "run", "dev:client", "--", "--host", "0.0.0.0"]
 
 volumes:
   postgres_data:
