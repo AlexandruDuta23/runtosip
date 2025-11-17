@@ -85,6 +85,16 @@ const Header = () => {
             >
               Gallery
             </Link>
+            <a
+              href={import.meta.env.VITE_SHOP_URL || 'http://localhost:3000'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`font-medium transition-colors duration-200 hover:text-primary ${
+                isScrolled || location.pathname !== '/' ? 'text-gray-700' : 'text-white'
+              }`}
+            >
+              {t('shop')}
+            </a>
             <LanguageToggle />
           </nav>
 
@@ -128,6 +138,15 @@ const Header = () => {
             >
               Gallery
             </Link>
+            <a
+              href={import.meta.env.VITE_SHOP_URL || 'http://localhost:3000'}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setIsMenuOpen(false)}
+              className="block px-3 py-2 text-gray-700 font-medium hover:text-primary transition-colors duration-200"
+            >
+              {t('shop')}
+            </a>
           </div>
         </div>
       )}

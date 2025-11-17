@@ -7,6 +7,7 @@
     "prestart": "tsx server/scripts/migrate-all.ts",
     "start": "tsx server/index.ts",
     "dev": "vite",
+    "dev:server": "tsx server/index.ts",
     "dev:client": "vite",
     "dev:all": "concurrently -n server,client -c blue,green \"npm:dev:server\" \"npm:dev:client\"",
     "migrate:all": "tsx server/scripts/migrate-all.ts",

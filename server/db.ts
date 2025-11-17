@@ -1,6 +1,8 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 
+// Load .env.local first (for local development), then .env (for Docker)
+dotenv.config({ path: '.env.local' });
 dotenv.config({ override: false });
 const databaseUrl =
   process.env.DATABASE_URL ||

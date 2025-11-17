@@ -16,6 +16,7 @@ const translations = {
     crew: 'Crew',
     articles: 'Articles',
     gallery: 'Gallery',
+    shop: 'Shop',
     contact: 'Contact',
     
     // Hero
@@ -120,6 +121,7 @@ const translations = {
     crew: 'Echipă',
     articles: 'Articole',
     gallery: 'Galerie',
+    shop: 'Magazin',
     contact: 'Contact',
     
     // Hero
